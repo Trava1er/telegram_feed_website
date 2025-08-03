@@ -64,6 +64,10 @@ def create_app(config_name=None):
         with app.app_context():
             db.create_all()
             
+        print("Step 8: Registering CLI commands...")
+        from services import cli
+        cli.init_app(app)
+            
         print("✅ Full application loaded successfully!")
         return app
             
