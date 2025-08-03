@@ -25,6 +25,13 @@ def create_app(config_name=None):
     app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('DATABASE_URL')
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
     
+    # Telegram configuration
+    app.config['TELEGRAM_BOT_TOKEN'] = os.getenv('TELEGRAM_BOT_TOKEN')
+    app.config['TELEGRAM_API_ID'] = os.getenv('TELEGRAM_API_ID')
+    app.config['TELEGRAM_API_HASH'] = os.getenv('TELEGRAM_API_HASH')
+    app.config['TELEGRAM_SESSION_NAME'] = os.getenv('TELEGRAM_SESSION_NAME', 'telegram_bot')
+    app.config['TELEGRAM_WEBHOOK_URL'] = os.getenv('TELEGRAM_WEBHOOK_URL')
+    
     # Add custom Jinja2 filters
     @app.template_filter('clean_text')
     def clean_text_filter(text):
