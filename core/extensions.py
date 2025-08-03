@@ -33,14 +33,14 @@ def register_blueprints(app):
     
     # Import blueprints
     from routes.main import main_bp
-    from routes.auth import auth_bp
+    # from routes.auth import auth_bp
     from routes.account import account_bp
     from routes.admin import admin_bp
     from routes.api import api_bp
     
     # Register blueprints
     app.register_blueprint(main_bp)
-    app.register_blueprint(auth_bp)
+    # app.register_blueprint(auth_bp)
     app.register_blueprint(account_bp)
     app.register_blueprint(admin_bp)
     app.register_blueprint(api_bp)
