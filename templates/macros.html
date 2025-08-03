@@ -1,0 +1,125 @@
+{# Макросы для переиспользования в шаблонах #}
+
+{# Макрос для рендеринга контактных кнопок #}
+{% macro render_contact_buttons(post, is_modal=False) %}
+    {% set button_class = 'modal-contact-button' if is_modal else 'contact-button' %}
+    
+    {# Телефоны #}
+    {% if post.phone_numbers %}
+        {% for phone in post.phone_numbers %}
+            <a href="tel:{{ phone }}" class="{{ button_class }}">
+                <i class="fas fa-phone"></i> {{ phone }}
+            </a>
+        {% endfor %}
+    {% endif %}
+    
+    {# Email адреса #}
+    {% if post.emails %}
+        {% for email in post.emails %}
+            <a href="mailto:{{ email }}" class="{{ button_class }}">
+                <i class="fas fa-envelope"></i> {{ email }}
+            </a>
+        {% endfor %}
+    {% endif %}
+    
+    {# Telegram пользователи #}
+    {% if post.telegram_users %}
+        {% for username in post.telegram_users %}
+            <a href="https://t.me/{{ username.replace('@', '') }}" target="_blank" class="{{ button_class }}">
+                <i class="fab fa-telegram-plane"></i> {{ username }}
+            </a>
+        {% endfor %}
+    {% endif %}
+    
+    {# Сообщение если нет контактов #}
+    {% if not (post.phone_numbers or post.emails or post.telegram_users) %}
+        <small class="text-muted">Контактная информация не найдена</small>
+    {% endif %}
+{% endmacro %}
+
+{# Макрос для рендеринга полного HTML контента модального окна #}
+{% macro render_modal_content(post) %}
+    <div class="modal-header">
+        <h5 class="modal-title">{{ post.feed.name }}</h5>
+        <div class="d-flex align-items-center gap-2">
+            <a href="{{ post.feed.url }}" target="_blank" class="btn btn-primary btn-sm">
+                <i class="fab fa-telegram-plane"></i> Открыть канал
+            </a>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+    </div>
+    <div class="modal-body" style="height: 500px; padding: 0;">
+        {% if post.media_url %}
+            <!-- Если есть медиа - разделяем на две части -->
+            <div style="display: flex; height: 100%; position: relative;">
+                <div class="modal-media-section" style="flex: 0 0 50%; height: 100%; display: flex; align-items: center; justify-content: center; background: #f8f9fa; border-radius: 8px 0 0 8px;">
+                    {% if post.media_type == 'photo' %}
+                        <img src="{{ post.media_url }}" alt="Media" style="max-width: 100%; max-height: 100%; object-fit: contain;"
+                              onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                        <div style="display: none; align-items: center; justify-content: center; height: 100%; background: #f0f0f0; position: relative; width: 100%;">
+                            <img src="/static/logo.png" alt="Logo" style="width: 100%; height: 100%; object-fit: contain; opacity: 0.4; position: absolute; top: 0; left: 0;">
+                            <div style="position: relative; z-index: 10; display: flex; align-items: center; justify-content: center; background: rgba(0,0,0,0.7); color: white; padding: 8px 12px; border-radius: 4px; font-size: 12px; font-weight: bold;">Медиа недоступно</div>
+                        </div>
+                    {% elif post.media_type == 'video' %}
+                        <video controls style="max-width: 100%; max-height: 100%; object-fit: contain;"
+                               onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                            <source src="{{ post.media_url }}" type="video/mp4">
+                        </video>
+                        <div style="display: none; align-items: center; justify-content: center; height: 100%; background: #f0f0f0; position: relative; width: 100%;">
+                            <img src="/static/logo.png" alt="Logo" style="width: 100%; height: 100%; object-fit: contain; opacity: 0.4; position: absolute; top: 0; left: 0;">
+                            <div style="position: relative; z-index: 10; display: flex; align-items: center; justify-content: center; background: rgba(0,0,0,0.7); color: white; padding: 8px 12px; border-radius: 4px; font-size: 12px; font-weight: bold;">Медиа недоступно</div>
+                        </div>
+                    {% else %}
+                        <div style="display: flex; align-items: center; justify-content: center; height: 100%; background: #f0f0f0; position: relative; width: 100%;">
+                            <img src="/static/logo.png" alt="Logo" style="width: 100%; height: 100%; object-fit: contain; opacity: 0.4; position: absolute; top: 0; left: 0;">
+                            <div style="position: relative; z-index: 10; display: flex; align-items: center; justify-content: center; background: rgba(0,0,0,0.7); color: white; padding: 8px 12px; border-radius: 4px; font-size: 12px; font-weight: bold;">Медиа недоступно</div>
+                        </div>
+                    {% endif %}
+                </div>
+        
+                <div class="modal-text-section" style="flex: 1; height: 100%; display: flex; flex-direction: column; padding: 16px;">
+                    <div class="mb-2">
+                        <small class="text-muted">{{ post.telegram_date.strftime('%d.%m.%Y, %H:%M') }}</small>
+                    </div>
+                    <div class="modal-content-text" style="flex: 1; overflow-y: auto; padding: 16px; border: 1px solid #dee2e6; border-radius: 8px; background: #ffffff;">
+                        {{ post.content|clean_text }}
+                    </div>
+                    <div class="modal-meta mt-2">
+                        {% if post.is_edited %}
+                            <small class="text-muted mt-1">
+                                <i class="fas fa-edit"></i> Отредактировано
+                            </small>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        {% else %}
+            <!-- Если нет медиа - текст на всю ширину с прокруткой -->
+            <div style="width: 100%; height: 100%; padding: 16px; display: flex; flex-direction: column;">
+                <div class="mb-2">
+                    <small class="text-muted">{{ post.telegram_date.strftime('%d.%m.%Y, %H:%M') }}</small>
+                </div>
+                <div class="modal-content-text" style="flex: 1; overflow-y: auto; padding: 16px; border: 1px solid #dee2e6; border-radius: 8px; background: #ffffff;">
+                    {{ post.content|clean_text }}
+                </div>
+                <div class="modal-meta mt-2">
+                    {% if post.is_edited %}
+                        <small class="text-muted mt-1">
+                            <i class="fas fa-edit"></i> Отредактировано
+                        </small>
+                    {% endif %}
+                </div>
+            </div>
+        {% endif %}
+    </div>
+    <div class="modal-footer">
+        <div class="d-flex justify-content-between align-items-center w-100">
+            <div class="modal-contact-buttons d-flex gap-2 flex-wrap">
+                {{ render_contact_buttons(post, is_modal=True) }}
+            </div>
+            <div class="post-views">
+                <i class="fas fa-eye"></i> {{ post.views }}
+            </div>
+        </div>
+    </div>
+{% endmacro %}

@@ -1,0 +1,817 @@
+{% extends "base.html" %}
+{% from "macros.html" import render_contact_buttons, render_modal_content %}
+
+{% block title %}Военная служба - {{ super() }}{% endblock %}
+
+{% block extra_head %}
+<script>
+// Set dark military theme on page load
+document.addEventListener('DOMContentLoaded', function() {
+    document.body.classList.add('military-dark-theme');
+});
+</script>
+{% endblock %}
+
+{% block content %}
+<div class="row">
+    <!-- Sidebar -->
+    <div class="col-md-3 slide-in-left">
+        <!-- Search Box -->
+        <div class="card sidebar-card">
+            <div class="card-header" style="background: transparent; border-bottom: 1px solid #d4521e;">
+                <h6 class="mb-0" style="color: #d4521e;">
+                    <i class="fas fa-search"></i>
+                    Поиск
+                </h6>
+            </div>
+            <div class="card-body" style="padding: 16px;">
+                <input type="text" placeholder="Поиск по вакансиям..." id="searchInput" class="search-input">
+            </div>
+        </div>
+        
+        <!-- Time Filter -->
+        <div class="card sidebar-card">
+            <div class="card-header" style="background: transparent; border-bottom: 1px solid #d4521e;">
+                <h6 class="mb-0" style="color: #d4521e;">
+                    <i class="fas fa-calendar-alt"></i>
+                    Фильтр по дате
+                </h6>
+            </div>
+            <div class="card-body" style="padding: 16px;">
+                <div class="mb-3">
+                    <label class="form-label small" style="color: #cccccc;">Быстрый выбор:</label>
+                    <select class="form-control" id="timeFilter">
+                        <option value="">Все время</option>
+                        <option value="today">Сегодня</option>
+                        <option value="week">На этой неделе</option>
+                        <option value="month">В этом месяце</option>
+                    </select>
+                </div>
+                
+                <div class="row">
+                    <div class="col-6">
+                        <label class="form-label small" style="color: #cccccc;">С:</label>
+                        <input type="date" class="form-control form-control-sm" id="dateFrom">
+                    </div>
+                    <div class="col-6">
+                        <label class="form-label small" style="color: #cccccc;">По:</label>
+                        <input type="date" class="form-control form-control-sm" id="dateTo">
+                    </div>
+                </div>
+                
+                <button class="btn btn-sm mt-2 w-100 apply-date-btn" onclick="applyDateRange()">
+                    Применить
+                </button>
+            </div>
+        </div>
+        
+        <!-- Navigation -->
+        <div class="card sidebar-card">
+            <div class="card-body text-center">
+                <a href="{{ url_for('main.index') }}" class="btn btn-outline-secondary w-100">
+                    <i class="fas fa-arrow-left"></i> Все каналы
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="col-md-9">
+        <!-- Filter Controls -->
+        <div class="d-flex justify-content-between align-items-center mb-3 military-header-panel">
+            <div>
+                <h5 class="mb-0" style="color: white;">
+                    <i class="fas fa-shield-alt me-2"></i>
+                    Служба по контракту
+                </h5>
+                <small style="color: rgba(255,255,255,0.8);">Официальные вакансии</small>
+            </div>
+        </div>
+        
+        <!-- Posts -->
+        <div class="posts-container fade-in-up" id="postsContainer">
+            {% if posts.items %}
+                {% for post in posts.items %}
+                <div class="post-card military-post" 
+                     data-channel-name="{{ post.feed.name|e }}"
+                     data-channel-date="{{ post.telegram_date.strftime('%d.%m.%Y, %H:%M') }}"
+                     data-channel-link="{{ post.feed.url|e }}"
+                     data-post-content="{{ post.content|clean_text|e }}"
+                     data-media-url="{{ post.media_url if post.media_url else '' }}"
+                     data-media-type="{{ post.media_type if post.media_type else '' }}"
+                     data-views="{{ post.views }}"
+                     data-is-edited="{{ post.is_edited }}">
+                    
+                    <!-- Hidden div with modal content -->
+                    <div class="modal-content-data" style="display: none;">
+                        {{ render_modal_content(post) }}
+                    </div>
+                    <div class="channel-header military-header">
+                        <div style="display: flex; align-items: center; gap: 8px;">
+                            <i class="fab fa-telegram-plane" style="font-size: 16px; color: #0088cc;"></i>
+                            <span class="channel-name">{{ post.feed.name }}</span>
+                            <span class="channel-date">{{ post.telegram_date.strftime('%d.%m.%Y, %H:%M') }}</span>
+                        </div>
+                        <a href="{{ post.feed.url }}" target="_blank" class="channel-link">
+                            Открыть канал
+                        </a>
+                    </div>
+                    <div class="post-content-wrapper {{ 'no-media' if not post.media_url else 'has-media' }}">
+                        {% if post.media_url %}
+                            <!-- Media section (left side) -->
+                            <div class="post-media-section">
+                                {% if post.media_type == 'photo' %}
+                                    <img src="{{ post.media_url }}" alt="Media" loading="lazy" 
+                                         style="width: 100%; height: 100%; object-fit: cover;"
+                                         onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                                    <!-- Fallback для неработающих фото -->
+                                    <div style="display: none; align-items: center; justify-content: center; height: 100%; background: #f0f0f0; position: relative;">
+                                        <img src="{{ url_for('static', filename='logo.png') }}" alt="Logo" style="width: 100%; height: 100%; object-fit: contain; opacity: 0.3; position: absolute; top: 0; left: 0;">
+                                        <div style="position: relative; z-index: 10; background: rgba(85,107,47,0.8); color: white; padding: 8px 12px; border-radius: 4px; font-size: 12px; font-weight: bold;">Медиа недоступно</div>
+                                    </div>
+                                {% elif post.media_type == 'video' %}
+                                    <video controls preload="none" style="width: 100%; height: 100%; object-fit: cover;"
+                                           onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                                        <source src="{{ post.media_url }}" type="video/mp4">
+                                        <p>Ваш браузер не поддерживает видео</p>
+                                    </video>
+                                    <!-- Fallback для неработающих видео -->
+                                    <div style="display: none; align-items: center; justify-content: center; height: 100%; background: #f0f0f0; position: relative;">
+                                        <img src="{{ url_for('static', filename='logo.png') }}" alt="Logo" style="width: 100%; height: 100%; object-fit: contain; opacity: 0.3; position: absolute; top: 0; left: 0;">
+                                        <div style="position: relative; z-index: 10; background: rgba(85,107,47,0.8); color: white; padding: 8px 12px; border-radius: 4px; font-size: 12px; font-weight: bold;">Медиа недоступно</div>
+                                    </div>
+                                {% else %}
+                                    <!-- НЕИЗВЕСТНЫЙ ТИП МЕДИА - ПОКАЗАТЬ ЛОГОТИП -->
+                                    <div style="display: flex; align-items: center; justify-content: center; height: 100%; background: #f0f0f0; position: relative;">
+                                        <img src="{{ url_for('static', filename='logo.png') }}" alt="Logo" style="width: 100%; height: 100%; object-fit: contain; opacity: 0.3; position: absolute; top: 0; left: 0;">
+                                        <div style="position: relative; z-index: 10; background: rgba(85,107,47,0.8); color: white; padding: 8px 12px; border-radius: 4px; font-size: 12px; font-weight: bold;">{{ post.media_type or 'Медиа недоступно' }}</div>
+                                    </div>
+                                {% endif %}
+                            </div>
+                        {% endif %}
+                        
+                        <!-- Text section (full width if no media, right side if has media) -->
+                        <div class="post-text-section {{ 'full-width' if not post.media_url else '' }}">
+                            <div class="post-text-content">
+                                <div class="post-text">
+                                    {{ (post.content|clean_text)[:500] }}...
+                                </div>
+                                
+                                <div class="post-meta">
+                                    <!-- Contact buttons moved here -->
+                                    <div class="contact-buttons">
+                                        {{ render_contact_buttons(post, is_modal=False) }}
+                                    </div>
+                                    
+                                    <!-- Additional meta info -->
+                                    <div class="meta-info">
+                                        <small class="text-muted">
+                                            {% if post.is_edited %}
+                                                <i class="fas fa-edit"></i> Отредактировано
+                                            {% endif %}
+                                            {% if post.duplicate_group_id and not post.is_primary_duplicate %}
+                                                {% if post.is_edited %}| {% endif %}<i class="fas fa-copy"></i> Дубликат
+                                            {% endif %}
+                                        </small>
+                                    </div>
+                                </div>
+                                
+                                <!-- Views counter in bottom-right corner -->
+                                <div class="post-views military-views">
+                                    <i class="fas fa-eye"></i> {{ post.views }}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+                
+                <!-- Pagination -->
+                {% if posts.pages > 1 %}
+                <nav aria-label="Page navigation" class="mt-4">
+                    <ul class="pagination justify-content-center">
+                        {% if posts.has_prev %}
+                            <li class="page-item">
+                                <a class="page-link military-pagination" href="{{ url_for('main.sluzhba', page=posts.prev_num) }}">Предыдущая</a>
+                            </li>
+                        {% endif %}
+                        
+                        {% for page_num in posts.iter_pages(left_edge=1, right_edge=1, left_current=1, right_current=2) %}
+                            {% if page_num %}
+                                {% if page_num != posts.page %}
+                                    <li class="page-item">
+                                        <a class="page-link military-pagination" href="{{ url_for('main.sluzhba', page=page_num) }}">{{ page_num }}</a>
+                                    </li>
+                                {% else %}
+                                    <li class="page-item active">
+                                        <span class="page-link" style="background-color: #556B2F; border-color: #556B2F;">{{ page_num }}</span>
+                                    </li>
+                                {% endif %}
+                            {% else %}
+                                <li class="page-item disabled">
+                                    <span class="page-link">…</span>
+                                </li>
+                            {% endif %}
+                        {% endfor %}
+                        
+                        {% if posts.has_next %}
+                            <li class="page-item">
+                                <a class="page-link military-pagination" href="{{ url_for('main.sluzhba', page=posts.next_num) }}">Следующая</a>
+                            </li>
+                        {% endif %}
+                    </ul>
+                </nav>
+                {% endif %}
+            {% else %}
+                <div class="text-center py-5">
+                    <i class="fas fa-shield-alt fa-3x mb-3" style="color: #556B2F;"></i>
+                    <h4 class="text-muted">Вакансий не найдено</h4>
+                    <p class="text-muted">В данный момент нет военных вакансий для отображения.</p>
+                    <a href="{{ url_for('main.index') }}" class="btn btn-primary">
+                        <i class="fas fa-arrow-left"></i> Вернуться к ленте
+                    </a>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<style>
+/* Dark Military Shooter Theme */
+body {
+    background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%) !important;
+    color: #e0e0e0 !important;
+}
+
+.container-fluid, .container {
+    background: transparent !important;
+}
+
+/* Military posts - dark theme */
+.military-post {
+    background: linear-gradient(145deg, #2a2a2a, #1e1e1e) !important;
+    border: 1px solid #444 !important;
+    border-left: 4px solid #d4521e !important;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6) !important;
+    color: #e0e0e0 !important;
+    margin-bottom: 20px !important;
+    border-radius: 12px !important;
+}
+
+.military-post:hover {
+    border-left-color: #e06038 !important;
+    box-shadow: 0 12px 40px rgba(212, 82, 30, 0.3) !important;
+    transform: translateY(-2px) !important;
+    transition: all 0.3s ease !important;
+}
+
+.military-header {
+    background: linear-gradient(135deg, #333333, #1a1a1a) !important;
+    color: #d4521e !important;
+    border-bottom: 2px solid #d4521e !important;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.8) !important;
+}
+
+.military-header .channel-name {
+    color: #d4521e !important;
+    font-weight: bold !important;
+}
+
+.military-header .channel-date {
+    color: #cccccc !important;
+}
+
+.military-header .channel-link {
+    color: #e06038 !important;
+    text-decoration: none !important;
+}
+
+.military-header .channel-link:hover {
+    color: #f0704a !important;
+}
+
+.military-header-panel {
+    background: linear-gradient(135deg, #1a1a1a, #333333) !important;
+    padding: 20px;
+    border-radius: 12px;
+    margin-bottom: 25px !important;
+    border: 2px solid #d4521e !important;
+    box-shadow: 0 8px 32px rgba(212, 82, 30, 0.4) !important;
+}
+
+.military-header-panel h5 {
+    color: #d4521e !important;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.8) !important;
+    font-weight: bold !important;
+}
+
+.military-header-panel small {
+    color: rgba(255, 255, 255, 0.7) !important;
+}
+
+/* Post content styling */
+.post-text {
+    color: #e0e0e0 !important;
+    background: rgba(42, 42, 42, 0.8) !important;
+    padding: 12px !important;
+    border-radius: 8px !important;
+    border: 1px solid #444 !important;
+}
+
+.military-views {
+    background: linear-gradient(135deg, #d4521e, #b8441a) !important;
+    color: white !important;
+    border: none !important;
+    box-shadow: 0 4px 12px rgba(212, 82, 30, 0.4) !important;
+    font-weight: bold !important;
+}
+
+.military-pagination {
+    color: #d4521e !important;
+    background: #2a2a2a !important;
+    border: 1px solid #d4521e !important;
+}
+
+.military-pagination:hover {
+    background: linear-gradient(135deg, #d4521e, #b8441a) !important;
+    border-color: #d4521e !important;
+    color: white !important;
+    box-shadow: 0 4px 12px rgba(212, 82, 30, 0.4) !important;
+}
+
+/* Sidebar dark theme */
+.sidebar-card {
+    background: linear-gradient(145deg, #2a2a2a, #1e1e1e) !important;
+    border: 1px solid #444 !important;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6) !important;
+    border-radius: 12px !important;
+}
+
+.card-header {
+    background: linear-gradient(135deg, #333333, #1a1a1a) !important;
+    border-bottom: 1px solid #d4521e !important;
+    color: #d4521e !important;
+}
+
+.card-body {
+    background: transparent !important;
+    color: #e0e0e0 !important;
+}
+
+/* Search functionality - dark theme with consistent styling */
+.search-input {
+    border: 1px solid #444 !important;
+    background: linear-gradient(145deg, #2a2a2a, #1e1e1e) !important;
+    color: #e0e0e0 !important;
+    padding: 8px 12px;
+    border-radius: 4px;
+    outline: none !important;
+    box-shadow: none !important;
+    width: 100%;
+    margin: 0 !important;
+    font-size: 0.875rem;
+}
+
+.search-input:focus {
+    background: linear-gradient(145deg, #333333, #2a2a2a) !important;
+    border-color: #d4521e !important;
+    box-shadow: 0 0 10px rgba(212, 82, 30, 0.3) !important;
+    color: #ffffff !important;
+}
+
+.search-input::placeholder {
+    color: #888 !important;
+}
+
+/* Form controls dark theme */
+.form-control, .form-control-sm {
+    background: linear-gradient(145deg, #2a2a2a, #1e1e1e) !important;
+    border: 1px solid #444 !important;
+    color: #e0e0e0 !important;
+    font-size: 0.875rem;
+}
+
+.form-control:focus, .form-control-sm:focus {
+    background: linear-gradient(145deg, #333333, #2a2a2a) !important;
+    border-color: #d4521e !important;
+    box-shadow: 0 0 10px rgba(212, 82, 30, 0.3) !important;
+    color: #ffffff !important;
+}
+
+.form-label {
+    color: #cccccc !important;
+}
+
+.text-muted {
+    color: #888 !important;
+}
+
+/* Fix calendar icons and search icon */
+.fas.fa-calendar-alt, .fas.fa-search {
+    color: #d4521e !important;
+}
+
+/* Input date placeholder fix */
+input[type="date"]::-webkit-datetime-edit-text,
+input[type="date"]::-webkit-datetime-edit-month-field,
+input[type="date"]::-webkit-datetime-edit-day-field,
+input[type="date"]::-webkit-datetime-edit-year-field {
+    color: #e0e0e0 !important;
+}
+
+input[type="date"]::-webkit-calendar-picker-indicator {
+    filter: invert(1) brightness(0.8) sepia(1) saturate(5) hue-rotate(10deg) !important;
+}
+
+/* Buttons dark theme */
+.btn {
+    border-radius: 8px !important;
+    font-weight: bold !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.5px !important;
+}
+
+.apply-date-btn {
+    background: linear-gradient(135deg, #d4521e, #b8441a) !important;
+    border: none !important;
+    color: white !important;
+    box-shadow: 0 4px 12px rgba(212, 82, 30, 0.4) !important;
+}
+
+.apply-date-btn:hover {
+    background: linear-gradient(135deg, #e06038, #d4521e) !important;
+    transform: translateY(-2px) !important;
+    box-shadow: 0 6px 20px rgba(212, 82, 30, 0.6) !important;
+}
+
+.btn-outline-secondary {
+    background: transparent !important;
+    border: 2px solid #d4521e !important;
+    color: #d4521e !important;
+}
+
+.btn-outline-secondary:hover {
+    background: linear-gradient(135deg, #d4521e, #b8441a) !important;
+    border-color: #d4521e !important;
+    color: white !important;
+    box-shadow: 0 4px 12px rgba(212, 82, 30, 0.4) !important;
+}
+
+/* Contact buttons military style */
+.military-post .contact-buttons .btn {
+    border: 2px solid #d4521e !important;
+    color: #d4521e !important;
+    background: transparent !important;
+}
+
+.military-post .contact-buttons .btn:hover {
+    background: linear-gradient(135deg, #d4521e, #b8441a) !important;
+    color: white !important;
+    transform: scale(1.05) !important;
+    box-shadow: 0 4px 12px rgba(212, 82, 30, 0.4) !important;
+}
+
+/* Pagination dark theme */
+.page-link {
+    background: linear-gradient(145deg, #2a2a2a, #1e1e1e) !important;
+    border: 1px solid #444 !important;
+    color: #e0e0e0 !important;
+}
+
+.page-link:hover {
+    background: linear-gradient(135deg, #d4521e, #b8441a) !important;
+    border-color: #d4521e !important;
+    color: white !important;
+}
+
+.page-item.active .page-link {
+    background: linear-gradient(135deg, #d4521e, #b8441a) !important;
+    border-color: #d4521e !important;
+    color: white !important;
+    box-shadow: 0 4px 12px rgba(212, 82, 30, 0.4) !important;
+}
+
+/* Media fallback styling */
+.post-media-section div[style*="background: #f0f0f0"] {
+    background: linear-gradient(145deg, #2a2a2a, #1e1e1e) !important;
+    border: 1px solid #444 !important;
+}
+
+.post-media-section div[style*="background: rgba(85,107,47,0.8)"] {
+    background: rgba(255, 107, 53, 0.9) !important;
+}
+
+/* No posts message */
+.text-center.py-5 {
+    color: #e0e0e0 !important;
+}
+
+.text-center.py-5 .fas.fa-shield-alt {
+    color: #d4521e !important;
+    filter: drop-shadow(0 4px 8px rgba(212, 82, 30, 0.3)) !important;
+}
+
+.text-center.py-5 h4 {
+    color: #e0e0e0 !important;
+}
+
+.text-center.py-5 p {
+    color: #cccccc !important;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .sidebar {
+        margin-bottom: 2rem;
+    }
+    
+    .military-header-panel {
+        padding: 15px;
+    }
+}
+
+/* Glowing effects */
+.military-post {
+    position: relative;
+}
+
+.military-post::before {
+    content: '';
+    position: absolute;
+    top: -2px;
+    left: -2px;
+    right: -2px;
+    bottom: -2px;
+    background: linear-gradient(45deg, #d4521e, transparent, #d4521e);
+    z-index: -1;
+    border-radius: 12px;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.military-post:hover::before {
+    opacity: 0.3;
+}
+
+/* Military modal styles */
+.military-dark-theme .modal-content {
+    background: linear-gradient(145deg, #2a2a2a, #1e1e1e) !important;
+    border: 2px solid #d4521e !important;
+    box-shadow: 0 16px 48px rgba(212, 82, 30, 0.4) !important;
+    color: #e0e0e0 !important;
+}
+
+.military-dark-theme .modal-header {
+    background: linear-gradient(135deg, #333333, #1a1a1a) !important;
+    border-bottom: 2px solid #d4521e !important;
+    color: #d4521e !important;
+}
+
+.military-dark-theme .modal-header .modal-title {
+    color: #d4521e !important;
+    font-weight: bold !important;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.8) !important;
+}
+
+.military-dark-theme .modal-header .btn-close {
+    filter: invert(1) sepia(1) saturate(5) hue-rotate(10deg) !important;
+    opacity: 0.8 !important;
+}
+
+.military-dark-theme .modal-header .btn-close:hover {
+    opacity: 1 !important;
+    transform: scale(1.1) !important;
+}
+
+.military-dark-theme .modal-body {
+    background: transparent !important;
+    color: #e0e0e0 !important;
+}
+
+.military-dark-theme .modal-content-text {
+    color: #e0e0e0 !important;
+    background: rgba(42, 42, 42, 0.8) !important;
+    border: 1px solid #444 !important;
+    border-radius: 8px !important;
+    padding: 16px !important;
+}
+
+.military-dark-theme .modal-media-section {
+    background: linear-gradient(145deg, #2a2a2a, #1e1e1e) !important;
+    border: 1px solid #444 !important;
+    border-radius: 8px !important;
+}
+
+.military-dark-theme .modal-text-section {
+    background: transparent !important;
+}
+
+/* Military modal contact buttons */
+.military-dark-theme .modal-contact-button {
+    background: linear-gradient(145deg, #2a2a2a, #1e1e1e) !important;
+    border: 2px solid #d4521e !important;
+    color: #d4521e !important;
+    font-weight: bold !important;
+}
+
+.military-dark-theme .modal-contact-button:hover {
+    background: linear-gradient(135deg, #d4521e, #b8441a) !important;
+    color: white !important;
+    transform: scale(1.05) !important;
+    box-shadow: 0 4px 12px rgba(212, 82, 30, 0.4) !important;
+}
+
+/* Military modal meta info */
+.military-dark-theme .modal-meta {
+    background: rgba(42, 42, 42, 0.6) !important;
+    border-top: 2px solid #d4521e !important;
+    border-radius: 8px !important;
+    padding: 12px 16px !important;
+}
+
+.military-dark-theme .modal-meta .text-muted {
+    color: #cccccc !important;
+}
+
+/* Стили для прокрутки в модальном окне */
+.military-dark-theme .modal-content-text {
+    scrollbar-width: thin !important;
+    scrollbar-color: #d4521e #2a2a2a !important;
+}
+
+.military-dark-theme .modal-content-text::-webkit-scrollbar {
+    width: 8px !important;
+}
+
+.military-dark-theme .modal-content-text::-webkit-scrollbar-track {
+    background: #2a2a2a !important;
+    border-radius: 4px !important;
+}
+
+.military-dark-theme .modal-content-text::-webkit-scrollbar-thumb {
+    background: #d4521e !important;
+    border-radius: 4px !important;
+}
+
+.military-dark-theme .modal-content-text::-webkit-scrollbar-thumb:hover {
+    background: #e06038 !important;
+}
+
+</style>
+
+<script>
+// Search functionality
+document.addEventListener('DOMContentLoaded', function() {
+    const searchInput = document.getElementById('searchInput');
+    
+    searchInput.addEventListener('input', function(e) {
+        const searchTerm = e.target.value.toLowerCase().trim();
+        const posts = document.querySelectorAll('.military-post');
+        
+        console.log('Поиск по термину:', searchTerm);
+        console.log('Найдено постов:', posts.length);
+        
+        let visibleCount = 0;
+        
+        posts.forEach(post => {
+            const content = post.getAttribute('data-post-content');
+            const channelName = post.getAttribute('data-channel-name');
+            
+            // Проверяем, что атрибуты существуют
+            if (!content || !channelName) {
+                console.log('Отсутствуют атрибуты у поста');
+                return;
+            }
+            
+            const contentLower = content.toLowerCase();
+            const channelLower = channelName.toLowerCase();
+            
+            // Если поле поиска пустое, показать все посты
+            if (searchTerm === '') {
+                post.style.display = 'block';
+                visibleCount++;
+                return;
+            }
+            
+            // Поиск по содержимому поста и названию канала
+            const contentMatch = contentLower.includes(searchTerm);
+            const channelMatch = channelLower.includes(searchTerm);
+            
+            if (contentMatch || channelMatch) {
+                post.style.display = 'block';
+                visibleCount++;
+                console.log('Показан пост:', channelName, 'по', contentMatch ? 'контенту' : 'каналу');
+            } else {
+                post.style.display = 'none';
+            }
+        });
+        
+        console.log('Видимых постов:', visibleCount);
+        
+        // Показать сообщение если ничего не найдено
+        const container = document.getElementById('postsContainer');
+        let noResultsMsg = document.getElementById('no-search-results');
+        
+        if (visibleCount === 0 && searchTerm !== '') {
+            if (!noResultsMsg) {
+                noResultsMsg = document.createElement('div');
+                noResultsMsg.id = 'no-search-results';
+                noResultsMsg.className = 'text-center py-5';
+                noResultsMsg.innerHTML = `
+                    <i class="fas fa-search fa-3x mb-3" style="color: #d4521e;"></i>
+                    <h4 style="color: #e0e0e0;">Ничего не найдено</h4>
+                    <p style="color: #cccccc;">По запросу "${searchTerm}" ничего не найдено.</p>
+                `;
+                container.appendChild(noResultsMsg);
+            }
+        } else if (noResultsMsg) {
+            noResultsMsg.remove();
+        }
+    });
+});
+
+// Time filter functionality
+document.getElementById('timeFilter').addEventListener('change', function(e) {
+    const filterValue = e.target.value;
+    const posts = document.querySelectorAll('.military-post');
+    const now = new Date();
+    
+    // Очистить кастомные даты при выборе быстрого фильтра
+    if (filterValue) {
+        document.getElementById('dateFrom').value = '';
+        document.getElementById('dateTo').value = '';
+    }
+    
+    posts.forEach(post => {
+        const postDateStr = post.getAttribute('data-channel-date');
+        // Парсим дату правильно: формат "DD.MM.YYYY, HH:MM"
+        const [datePart, timePart] = postDateStr.split(', ');
+        const [day, month, year] = datePart.split('.');
+        const [hours, minutes] = timePart.split(':');
+        const postDate = new Date(year, month - 1, day, hours, minutes);
+        
+        let shouldShow = true;
+        
+        switch(filterValue) {
+            case 'today':
+                shouldShow = postDate.toDateString() === now.toDateString();
+                break;
+            case 'week':
+                const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+                shouldShow = postDate >= weekAgo;
+                break;
+            case 'month':
+                const monthAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+                shouldShow = postDate >= monthAgo;
+                break;
+            default:
+                shouldShow = true;
+        }
+        
+        post.style.display = shouldShow ? 'block' : 'none';
+    });
+});
+
+// Date range filter
+function applyDateRange() {
+    const dateFrom = document.getElementById('dateFrom').value;
+    const dateTo = document.getElementById('dateTo').value;
+    const posts = document.querySelectorAll('.military-post');
+    
+    if (!dateFrom && !dateTo) {
+        // Если даты не выбраны, показать все посты
+        posts.forEach(post => {
+            post.style.display = 'block';
+        });
+        return;
+    }
+    
+    // Очистить быстрый фильтр при применении диапазона дат
+    document.getElementById('timeFilter').value = '';
+    
+    const fromDate = dateFrom ? new Date(dateFrom) : new Date('1900-01-01');
+    const toDate = dateTo ? new Date(dateTo + 'T23:59:59') : new Date();
+    
+    posts.forEach(post => {
+        const postDateStr = post.getAttribute('data-channel-date');
+        // Парсим дату правильно: формат "DD.MM.YYYY, HH:MM"
+        const [datePart, timePart] = postDateStr.split(', ');
+        const [day, month, year] = datePart.split('.');
+        const [hours, minutes] = timePart.split(':');
+        const postDate = new Date(year, month - 1, day, hours, minutes);
+        
+        const shouldShow = postDate >= fromDate && postDate <= toDate;
+        post.style.display = shouldShow ? 'block' : 'none';
+    });
+}
+
+// Очистка дат при изменении быстрого фильтра
+document.getElementById('dateFrom').addEventListener('change', function() {
+    document.getElementById('timeFilter').value = '';
+});
+
+document.getElementById('dateTo').addEventListener('change', function() {
+    document.getElementById('timeFilter').value = '';
+});
+</script>
+{% endblock %}

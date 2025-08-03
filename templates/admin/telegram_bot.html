@@ -1,0 +1,303 @@
+{% extends "base.html" %}
+
+{% block title %}Telegram Bot Management{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="row">
+        <div class="col-12">
+            <h1 class="h3 mb-4">🤖 Telegram Bot Management</h1>
+        </div>
+    </div>
+
+    <!-- Statistics Cards -->
+    <div class="row mb-4">
+        <div class="col-md-3 mb-3">
+            <div class="card bg-primary text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h4 class="card-title">{{ stats.total_telegram_feeds }}</h4>
+                            <p class="card-text">Total Telegram Feeds</p>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="fab fa-telegram-plane fa-2x"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-3 mb-3">
+            <div class="card bg-success text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h4 class="card-title">{{ stats.active_telegram_feeds }}</h4>
+                            <p class="card-text">Active Feeds</p>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="fas fa-check-circle fa-2x"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-3 mb-3">
+            <div class="card bg-info text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h4 class="card-title">{{ stats.total_telegram_posts }}</h4>
+                            <p class="card-text">Total Posts</p>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="fas fa-comments fa-2x"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-3 mb-3">
+            <div class="card bg-warning text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h4 class="card-title">{{ stats.recent_telegram_posts|length }}</h4>
+                            <p class="card-text">Recent Posts</p>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="fas fa-clock fa-2x"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Control Panel -->
+    <div class="row mb-4">
+        <div class="col-lg-6 mb-3">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">🔄 Sync Operations</h5>
+                </div>
+                <div class="card-body">
+                    <p class="text-muted mb-3">Manually trigger synchronization or test bot connection</p>
+                    
+                    <form method="POST" action="{{ url_for('admin.telegram_sync') }}" class="d-inline-block">
+                        <button type="submit" class="btn btn-primary me-2">
+                            <i class="fas fa-sync-alt"></i> Sync All Feeds
+                        </button>
+                    </form>
+                    
+                    <form method="POST" action="{{ url_for('admin.telegram_test_connection') }}" class="d-inline-block">
+                        <button type="submit" class="btn btn-info">
+                            <i class="fas fa-wifi"></i> Test Connection
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-6 mb-3">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">📊 Channel Info</h5>
+                </div>
+                <div class="card-body">
+                    <form method="POST" action="{{ url_for('admin.telegram_channel_info') }}">
+                        <div class="input-group">
+                            <input type="text" class="form-control" name="channel_identifier" 
+                                   placeholder="@channel_name or channel link" required>
+                            <button class="btn btn-outline-secondary" type="submit">
+                                <i class="fas fa-search"></i> Get Info
+                            </button>
+                        </div>
+                    </form>
+                    <small class="text-muted">Get information about any Telegram channel</small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Telegram Feeds -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="card-title mb-0">📱 Telegram Feeds</h5>
+                    <a href="{{ url_for('admin.add_feed') }}" class="btn btn-success btn-sm">
+                        <i class="fas fa-plus"></i> Add Feed
+                    </a>
+                </div>
+                <div class="card-body">
+                    {% if telegram_feeds %}
+                        <div class="table-responsive">
+                            <table class="table table-striped">
+                                <thead>
+                                    <tr>
+                                        <th>Name</th>
+                                        <th>Channel</th>
+                                        <th>Status</th>
+                                        <th>Posts</th>
+                                        <th>Last Updated</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for feed in telegram_feeds %}
+                                    <tr>
+                                        <td>
+                                            <strong>{{ feed.name }}</strong>
+                                            {% if feed.description %}
+                                                <br><small class="text-muted">{{ feed.description[:100] }}{% if feed.description|length > 100 %}...{% endif %}</small>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            <code>{{ feed.telegram_channel_id }}</code>
+                                            {% if feed.url %}
+                                                <br><a href="{{ feed.url }}" target="_blank" class="text-decoration-none">
+                                                    <i class="fas fa-external-link-alt"></i> Open
+                                                </a>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            {% if feed.is_active %}
+                                                <span class="badge bg-success">Active</span>
+                                            {% else %}
+                                                <span class="badge bg-secondary">Inactive</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            <span class="badge bg-info">{{ feed.posts|length }}</span>
+                                        </td>
+                                        <td>
+                                            {% if feed.posts %}
+                                                {{ feed.posts[0].telegram_date.strftime('%d.%m.%Y %H:%M') }}
+                                            {% else %}
+                                                <span class="text-muted">Never</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            <form method="POST" action="{{ url_for('admin.telegram_sync_feed', feed_id=feed.id) }}" class="d-inline">
+                                                <button type="submit" class="btn btn-sm btn-outline-primary" title="Sync this feed">
+                                                    <i class="fas fa-sync-alt"></i>
+                                                </button>
+                                            </form>
+                                            
+                                            <a href="{{ url_for('main.index', feed_id=feed.id) }}" 
+                                               class="btn btn-sm btn-outline-secondary" title="View posts">
+                                                <i class="fas fa-eye"></i>
+                                            </a>
+                                            
+                                            <form method="POST" action="{{ url_for('admin.delete_feed', feed_id=feed.id) }}" 
+                                                  class="d-inline" onsubmit="return confirm('Are you sure?')">
+                                                <button type="submit" class="btn btn-sm btn-outline-danger" title="Delete feed">
+                                                    <i class="fas fa-trash"></i>
+                                                </button>
+                                            </form>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <div class="text-center py-4">
+                            <i class="fab fa-telegram-plane fa-3x text-muted mb-3"></i>
+                            <p class="text-muted">No Telegram feeds configured yet.</p>
+                            <a href="{{ url_for('admin.add_feed') }}" class="btn btn-primary">
+                                <i class="fas fa-plus"></i> Add Your First Telegram Feed
+                            </a>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Posts -->
+    {% if stats.recent_telegram_posts %}
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">📄 Recent Telegram Posts</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        {% for post in stats.recent_telegram_posts %}
+                        <div class="col-md-6 col-lg-4 mb-3">
+                            <div class="card border-left-primary">
+                                <div class="card-body p-3">
+                                    <h6 class="card-title">{{ post.feed.name }}</h6>
+                                    <p class="card-text">{{ post.content[:100] }}{% if post.content|length > 100 %}...{% endif %}</p>
+                                    <small class="text-muted">
+                                        <i class="fas fa-calendar"></i> {{ post.telegram_date.strftime('%d.%m.%Y %H:%M') }}
+                                        {% if post.views %}
+                                            <i class="fas fa-eye ms-2"></i> {{ post.views }}
+                                        {% endif %}
+                                    </small>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Bot Instructions -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">📖 Bot Usage Instructions</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6>CLI Commands:</h6>
+                            <pre class="bg-light p-3 rounded"><code># Sync all feeds
+flask telegram sync
+
+# Sync specific feed
+flask telegram sync-feed 1
+
+# Add new feed
+flask telegram add-feed @channel "Feed Name"
+
+# Test connection
+flask telegram test-connection
+
+# List all feeds
+flask telegram list-feeds</code></pre>
+                        </div>
+                        <div class="col-md-6">
+                            <h6>Setup Instructions:</h6>
+                            <ol>
+                                <li>Get Telegram API credentials from <a href="https://my.telegram.org/apps" target="_blank">my.telegram.org/apps</a></li>
+                                <li>Add <code>TELEGRAM_API_ID</code> and <code>TELEGRAM_API_HASH</code> to your .env file</li>
+                                <li>Test connection using the button above</li>
+                                <li>Add Telegram channels using the CLI or admin interface</li>
+                                <li>Bot will automatically sync every 30 minutes</li>
+                            </ol>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.card.border-left-primary {
+    border-left: 0.25rem solid #007bff;
+}
+</style>
+{% endblock %}

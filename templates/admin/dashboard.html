@@ -1,0 +1,161 @@
+{% extends "base.html" %}
+
+{% block title %}Админ панель - Work-ing{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <h1 class="mb-4" style="color: #ffffff;">
+            <i class="fas fa-tachometer-alt me-2"></i>
+            Админ панель
+        </h1>
+    </div>
+</div>
+
+<!-- Stats Cards -->
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="card admin-stat-card" style="background: linear-gradient(135deg, #8A2BE2 0%, #4B0082 100%);">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h4 style="color: #ffffff;">{{ stats.total_posts }}</h4>
+                        <p class="mb-0" style="color: rgba(255, 255, 255, 0.85);">Всего постов</p>
+                    </div>
+                    <div>
+                        <i class="fas fa-newspaper fa-2x" style="color: rgba(255, 255, 255, 0.7);"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3">
+        <div class="card admin-stat-card" style="background: linear-gradient(135deg, #00BFFF 0%, #0080CC 100%);">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h4 style="color: #ffffff;">{{ stats.active_feeds }}</h4>
+                        <p class="mb-0" style="color: rgba(255, 255, 255, 0.85);">Активных каналов</p>
+                    </div>
+                    <div>
+                        <i class="fab fa-telegram-plane fa-2x" style="color: rgba(255, 255, 255, 0.7);"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3">
+        <div class="card admin-stat-card" style="background: linear-gradient(135deg, #32CD32 0%, #228B22 100%);">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h4 style="color: #ffffff;">{{ stats.total_feeds }}</h4>
+                        <p class="mb-0" style="color: rgba(255, 255, 255, 0.85);">Всего каналов</p>
+                    </div>
+                    <div>
+                        <i class="fas fa-rss fa-2x" style="color: rgba(255, 255, 255, 0.7);"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3">
+        <div class="card admin-stat-card" style="background: linear-gradient(135deg, #FF1493 0%, #C71585 100%);">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h4 style="color: #ffffff;">{{ stats.total_categories }}</h4>
+                        <p class="mb-0" style="color: rgba(255, 255, 255, 0.85);">Категорий</p>
+                    </div>
+                    <div>
+                        <i class="fas fa-tags fa-2x" style="color: rgba(255, 255, 255, 0.7);"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Navigation Cards -->
+<div class="row mb-4">
+    <div class="col-md-6">
+        <div class="card admin-nav-card h-100">
+            <div class="card-body text-center">
+                <i class="fab fa-telegram-plane fa-3x mb-3" style="color: #8A2BE2;"></i>
+                <h5 style="color: #ffffff;">Управление каналами</h5>
+                <p style="color: rgba(255, 255, 255, 0.7);">Добавление, редактирование и управление Telegram каналами</p>
+                <a href="{{ url_for('admin.feeds') }}" class="btn btn-primary">
+                    <i class="fas fa-cog me-1"></i>Управление каналами
+                </a>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-6">
+        <div class="card admin-nav-card h-100">
+            <div class="card-body text-center">
+                <i class="fas fa-tags fa-3x mb-3" style="color: #00BFFF;"></i>
+                <h5 style="color: #ffffff;">Управление категориями</h5>
+                <p style="color: rgba(255, 255, 255, 0.7);">Организация каналов по категориям</p>
+                <a href="{{ url_for('admin.categories') }}" class="btn btn-secondary">
+                    <i class="fas fa-cog me-1"></i>Управление категориями
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Recent Posts -->
+{% if stats.recent_posts %}
+<div class="row">
+    <div class="col-12">
+        <div class="card admin-nav-card">
+            <div class="card-header" style="background: linear-gradient(135deg, #64748B 0%, #475569 100%); border-radius: 20px 20px 0 0;">
+                <h5 class="mb-0" style="color: #ffffff;">
+                    <i class="fas fa-clock me-2"></i>Последние посты
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table" style="color: rgba(255, 255, 255, 0.85);">
+                        <thead>
+                            <tr style="color: #ffffff;">
+                                <th>Канал</th>
+                                <th>Содержание</th>
+                                <th>Дата</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for post in stats.recent_posts %}
+                            <tr style="border-color: rgba(255, 255, 255, 0.1);">
+                                <td>
+                                    <strong style="color: #ffffff;">{{ post.feed.name if post.feed else 'Неизвестно' }}</strong>
+                                </td>
+                                <td style="color: rgba(255, 255, 255, 0.7);">
+                                    {{ post.content[:100] }}{% if post.content|length > 100 %}...{% endif %}
+                                </td>
+                                <td>
+                                    <small style="color: rgba(255, 255, 255, 0.6);">
+                                        {{ post.created_at.strftime('%Y-%m-%d %H:%M') }}
+                                    </small>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                
+                <div class="text-center">
+                    <a href="{{ url_for('admin.posts') }}" class="btn btn-outline-primary">
+                        <i class="fas fa-eye me-1"></i>Смотреть все посты
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endblock %}

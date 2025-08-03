@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+
+{% block title %}Добавить канал - Work-ing{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card admin-nav-card">
+            <div class="card-header" style="background: linear-gradient(135deg, #64748B 0%, #475569 100%); border-radius: 20px 20px 0 0;">
+                <h5 class="mb-0" style="color: #ffffff;">
+                    <i class="fab fa-telegram-plane me-2"></i>Добавить новый канал
+                </h5>
+            </div>
+            <div class="card-body">
+                <form method="POST">
+                    <div class="mb-3">
+                        <label for="name" class="form-label" style="color: rgba(255, 255, 255, 0.85);">Название канала</label>
+                        <input type="text" class="form-control" id="name" name="name" required 
+                               placeholder="Введите название канала">
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="url" class="form-label" style="color: rgba(255, 255, 255, 0.85);">URL канала</label>
+                        <input type="url" class="form-control" id="url" name="url" required 
+                               placeholder="https://t.me/channel_name">
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="telegram_channel_id" class="form-label" style="color: rgba(255, 255, 255, 0.85);">ID канала</label>
+                        <input type="text" class="form-control" id="telegram_channel_id" name="telegram_channel_id" 
+                               placeholder="@channel_name или -100123456789">
+                        <div class="form-text" style="color: rgba(255, 255, 255, 0.6);">
+                            ID канала для доступа к API Telegram
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="description" class="form-label" style="color: rgba(255, 255, 255, 0.85);">Описание</label>
+                        <textarea class="form-control" id="description" name="description" rows="3" 
+                                  placeholder="Краткое описание канала"></textarea>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="category_id" class="form-label" style="color: rgba(255, 255, 255, 0.85);">Категория</label>
+                        <select class="form-select" id="category_id" name="category_id">
+                            <option value="">Выберите категорию</option>
+                            {% for category in categories %}
+                            <option value="{{ category.id }}">{{ category.display_name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    
+                    <div class="d-flex gap-3">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-plus me-1"></i>Добавить канал
+                        </button>
+                        <a href="{{ url_for('admin.feeds') }}" class="btn btn-secondary">
+                            <i class="fas fa-arrow-left me-1"></i>Отмена
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

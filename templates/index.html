@@ -1,0 +1,271 @@
+{% extends "base.html" %}
+{% from "macros.html" import render_contact_buttons, render_modal_content %}
+
+{% block title %}Work-ing - Telegram Feed Aggregator{% endblock %}
+
+{% block content %}
+<div class="row">
+    <!-- Sidebar -->
+    <div class="col-md-3 slide-in-left">
+        <!-- Search Box -->
+        <div class="search-box">
+            <input type="text" placeholder="Поиск...">
+        </div>
+        
+        <!-- Time Filter -->
+        <div class="card sidebar-card">
+            <div class="card-body" style="padding: 16px;">
+                <select class="form-control" style="background: #f8fafc; border: 1px solid #e5e7eb; color: #374151;">
+                    <option>Все время</option>
+                    <option>Сегодня</option>
+                    <option>На этой неделе</option>
+                    <option>В этом месяце</option>
+                </select>
+            </div>
+        </div>
+        
+        <!-- Channels List -->
+        <div class="card sidebar-card">
+            <div class="card-header">
+                <h6 class="mb-0">Категории</h6>
+            </div>
+            <div class="card-body" style="padding: 0;">
+                <div class="list-group list-group-flush">
+                    <a href="{{ url_for('main.index') }}" 
+                       class="list-group-item list-group-item-action {{ 'active' if not current_category_id and not current_feed_id }}">
+                        <i class="fas fa-globe me-2"></i> Все каналы
+                    </a>
+                    <a href="{{ url_for('main.sluzhba') }}" 
+                       class="list-group-item list-group-item-action military-service-link">
+                        <i class="fas fa-shield-alt me-2" style="color: #ff6b35; text-shadow: 0 2px 4px rgba(255, 107, 53, 0.3);"></i> Служба по контракту
+                    </a>
+                    {% for category in categories %}
+                    <a href="{{ url_for('main.index', category_id=category.id) }}" 
+                       class="list-group-item list-group-item-action {{ 'active' if current_category_id == category.id }}">
+                        <i class="{{ category.icon }} me-2" style="color: {{ category.color }};"></i>
+                        {{ category.display_name }}
+                    </a>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+        
+        <!-- Feeds List -->
+        <div class="card sidebar-card">
+            <div class="card-header">
+                <h6 class="mb-0">Каналы</h6>
+            </div>
+            <div class="card-body" style="padding: 0;">
+                <div class="list-group list-group-flush">
+                    {% for feed in feeds %}
+                    <a href="{{ url_for('main.index', feed_id=feed.id) }}" 
+                       class="list-group-item list-group-item-action {{ 'active' if current_feed_id == feed.id }}">
+                        <i class="fab fa-telegram-plane me-2"></i>
+                        {{ feed.name }}
+                    </a>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="col-md-9">
+        <!-- Filter Controls -->
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <div>
+                <h5 class="mb-0">
+                    {% if current_feed_id %}
+                        Посты из {{ feeds|selectattr('id', 'equalto', current_feed_id)|first|attr('name') }}
+                    {% elif current_category_id %}
+                        Посты из категории {{ categories|selectattr('id', 'equalto', current_category_id)|first|attr('display_name') }}
+                    {% else %}
+                        Все посты
+                    {% endif %}
+                </h5>
+            </div>
+        </div>
+        
+        <!-- Posts -->
+        <div class="posts-container fade-in-up">
+            {% if posts.items %}
+                {% for post in posts.items %}
+                <div class="post-card" 
+                     data-channel-name="{{ post.feed.name|e }}"
+                     data-channel-date="{{ post.telegram_date.strftime('%d.%m.%Y, %H:%M') }}"
+                     data-channel-link="{{ post.feed.url|e }}"
+                     data-post-content="{{ post.content|clean_text|e }}"
+                     data-media-url="{{ post.media_url if post.media_url else '' }}"
+                     data-media-type="{{ post.media_type if post.media_type else '' }}"
+                     data-views="{{ post.views }}"
+                     data-is-edited="{{ post.is_edited }}">
+                    
+                    <!-- Hidden div with modal content -->
+                    <div class="modal-content-data" style="display: none;">
+                        {{ render_modal_content(post) }}
+                    </div>
+                    <div class="channel-header">
+                        <div style="display: flex; align-items: center; gap: 8px;">
+                            <i class="fab fa-telegram-plane" style="font-size: 16px; color: #0088cc;"></i>
+                            <span class="channel-name">{{ post.feed.name }}</span>
+                            <span class="channel-date">{{ post.telegram_date.strftime('%d.%m.%Y, %H:%M') }}</span>
+                        </div>
+                        <a href="{{ post.feed.url }}" target="_blank" class="channel-link">
+                            Открыть канал
+                        </a>
+                    </div>
+                    <div class="post-content-wrapper {{ 'no-media' if not post.media_url else 'has-media' }}">
+                        {% if post.media_url %}
+                            <!-- Media section (left side) -->
+                            <div class="post-media-section">
+                                {% if post.media_type == 'photo' %}
+                                    <img src="{{ post.media_url }}" alt="Media" loading="lazy" 
+                                         style="width: 100%; height: 100%; object-fit: cover;"
+                                         onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                                    <!-- Fallback для неработающих фото -->
+                                    <div style="display: none; align-items: center; justify-content: center; height: 100%; background: #f0f0f0; position: relative;">
+                                        <img src="{{ url_for('static', filename='logo.png') }}" alt="Logo" style="width: 100%; height: 100%; object-fit: contain; opacity: 0.3; position: absolute; top: 0; left: 0;">
+                                        <div style="position: relative; z-index: 10; background: rgba(0,0,0,0.7); color: white; padding: 8px 12px; border-radius: 4px; font-size: 12px; font-weight: bold;">Медиа недоступно</div>
+                                    </div>
+                                {% elif post.media_type == 'video' %}
+                                    <video controls preload="none" style="width: 100%; height: 100%; object-fit: cover;"
+                                           onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                                        <source src="{{ post.media_url }}" type="video/mp4">
+                                        <p>Ваш браузер не поддерживает видео</p>
+                                    </video>
+                                    <!-- Fallback для неработающих видео -->
+                                    <div style="display: none; align-items: center; justify-content: center; height: 100%; background: #f0f0f0; position: relative;">
+                                        <img src="{{ url_for('static', filename='logo.png') }}" alt="Logo" style="width: 100%; height: 100%; object-fit: contain; opacity: 0.3; position: absolute; top: 0; left: 0;">
+                                        <div style="position: relative; z-index: 10; background: rgba(0,0,0,0.7); color: white; padding: 8px 12px; border-radius: 4px; font-size: 12px; font-weight: bold;">Медиа недоступно</div>
+                                    </div>
+                                {% else %}
+                                    <!-- НЕИЗВЕСТНЫЙ ТИП МЕДИА - ПОКАЗАТЬ ЛОГОТИП -->
+                                    <div style="display: flex; align-items: center; justify-content: center; height: 100%; background: #f0f0f0; position: relative;">
+                                        <img src="{{ url_for('static', filename='logo.png') }}" alt="Logo" style="width: 100%; height: 100%; object-fit: contain; opacity: 0.3; position: absolute; top: 0; left: 0;">
+                                        <div style="position: relative; z-index: 10; background: rgba(0,0,0,0.7); color: white; padding: 8px 12px; border-radius: 4px; font-size: 12px; font-weight: bold;">{{ post.media_type or 'Медиа недоступно' }}</div>
+                                    </div>
+                                {% endif %}
+                            </div>
+                        {% endif %}
+                        
+                        <!-- Text section (full width if no media, right side if has media) -->
+                        <div class="post-text-section {{ 'full-width' if not post.media_url else '' }}">
+                            <div class="post-text-content">
+                                <div class="post-text">
+                                    {{ (post.content|clean_text)[:500] }}...
+                                </div>
+                                
+                                <div class="post-meta">
+                                    <!-- Contact buttons moved here -->
+                                    <div class="contact-buttons">
+                                        {{ render_contact_buttons(post, is_modal=False) }}
+                                    </div>
+                                    
+                                    <!-- Additional meta info -->
+                                    <div class="meta-info">
+                                        <small class="text-muted">
+                                            {% if post.is_edited %}
+                                                <i class="fas fa-edit"></i> Отредактировано
+                                            {% endif %}
+                                            {% if post.duplicate_group_id and not post.is_primary_duplicate %}
+                                                {% if post.is_edited %}| {% endif %}<i class="fas fa-copy"></i> Дубликат
+                                            {% endif %}
+                                        </small>
+                                    </div>
+                                </div>
+                                
+                                <!-- Views counter in bottom-right corner -->
+                                <div class="post-views">
+                                    <i class="fas fa-eye"></i> {{ post.views }}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+                
+                <!-- Pagination -->
+                {% if posts.pages > 1 %}
+                <nav aria-label="Page navigation" class="mt-4">
+                    <ul class="pagination justify-content-center">
+                        {% if posts.has_prev %}
+                            <li class="page-item">
+                                <a class="page-link" href="{{ url_for('main.index', 
+                                    page=posts.prev_num,
+                                    feed_id=current_feed_id,
+                                    category_id=current_category_id,
+                                    hide_duplicates=hide_duplicates) }}">Предыдущая</a>
+                            </li>
+                        {% endif %}
+                        
+                        {% for page_num in posts.iter_pages(left_edge=1, right_edge=1, left_current=1, right_current=2) %}
+                            {% if page_num %}
+                                {% if page_num != posts.page %}
+                                    <li class="page-item">
+                                        <a class="page-link" href="{{ url_for('main.index', 
+                                            page=page_num,
+                                            feed_id=current_feed_id,
+                                            category_id=current_category_id,
+                                            hide_duplicates=hide_duplicates) }}">{{ page_num }}</a>
+                                    </li>
+                                {% else %}
+                                    <li class="page-item active">
+                                        <span class="page-link">{{ page_num }}</span>
+                                    </li>
+                                {% endif %}
+                            {% else %}
+                                <li class="page-item disabled">
+                                    <span class="page-link">…</span>
+                                </li>
+                            {% endif %}
+                        {% endfor %}
+                        
+                        {% if posts.has_next %}
+                            <li class="page-item">
+                                <a class="page-link" href="{{ url_for('main.index', 
+                                    page=posts.next_num,
+                                    feed_id=current_feed_id,
+                                    category_id=current_category_id,
+                                    hide_duplicates=hide_duplicates) }}">Следующая</a>
+                            </li>
+                        {% endif %}
+                    </ul>
+                </nav>
+                {% endif %}
+            {% else %}
+                <div class="text-center py-5">
+                    <i class="fab fa-telegram-plane fa-3x text-muted mb-3"></i>
+                    <h4 class="text-muted">Постов не найдено</h4>
+                    <p class="text-muted">В данный момент нет постов для отображения.</p>
+                    {% if current_user.is_authenticated and current_user.role.name == 'ADMIN' %}
+                        <a href="{{ url_for('admin.feeds') }}" class="btn btn-primary">
+                            <i class="fas fa-plus"></i> Управление каналами
+                        </a>
+                    {% endif %}
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<style>
+/* Military service link styling */
+.military-service-link {
+    background: linear-gradient(135deg, rgba(255, 107, 53, 0.1), rgba(255, 107, 53, 0.05)) !important;
+    border-left: 3px solid #ff6b35 !important;
+    transition: all 0.3s ease !important;
+}
+
+.military-service-link:hover {
+    background: linear-gradient(135deg, rgba(255, 107, 53, 0.2), rgba(255, 107, 53, 0.1)) !important;
+    border-left-color: #ff8555 !important;
+    transform: translateX(2px) !important;
+    box-shadow: 0 4px 12px rgba(255, 107, 53, 0.3) !important;
+}
+
+.military-service-link i {
+    filter: drop-shadow(0 2px 4px rgba(255, 107, 53, 0.3)) !important;
+}
+</style>
+
+{% endblock %}

@@ -1,0 +1,100 @@
+{% extends "base.html" %}
+
+{% block title %}Управление категориями - Work-ing{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1 style="color: #ffffff;">
+        <i class="fas fa-tags me-2"></i>
+        Управление категориями
+    </h1>
+    <a href="{{ url_for('admin.add_category') }}" class="btn btn-primary">
+        <i class="fas fa-plus me-1"></i>Добавить категорию
+    </a>
+</div>
+
+{% if categories %}
+<div class="row">
+    {% for category in categories %}
+    <div class="col-md-6 mb-3">
+        <div class="card admin-nav-card">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <h5 style="color: {{ category.color }};">
+                            {% if category.icon %}<i class="{{ category.icon }} me-2"></i>{% endif %}
+                            {{ category.display_name }}
+                        </h5>
+                        <p style="color: rgba(255, 255, 255, 0.7); margin-bottom: 8px;">{{ category.description or 'Нет описания' }}</p>
+                        <small style="color: rgba(255, 255, 255, 0.6);">
+                            Системное имя: {{ category.name }}
+                        </small>
+                        <br>
+                        <span class="badge" style="background-color: {{ category.color }}; color: #ffffff; margin-top: 8px;">
+                            {{ category.feeds|length }} каналов
+                        </span>
+                    </div>
+                    <div class="dropdown">
+                        <button class="btn btn-outline-secondary btn-sm" type="button" data-bs-toggle="dropdown">
+                            <i class="fas fa-ellipsis-v"></i>
+                        </button>
+                        <ul class="dropdown-menu dropdown-menu-dark">
+                            <li><a class="dropdown-item" href="#"><i class="fas fa-edit me-2"></i>Редактировать</a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item text-danger" href="#" onclick="deleteCategory({{ category.id }}, '{{ category.display_name }}')">
+                                <i class="fas fa-trash me-2"></i>Удалить
+                            </a></li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% else %}
+<div class="empty-state">
+    <i class="fas fa-tags"></i>
+    <h4>Категории не найдены</h4>
+    <p>Начните с добавления первой категории для организации каналов.</p>
+    <a href="{{ url_for('admin.add_category') }}" class="btn btn-primary">
+        <i class="fas fa-plus me-1"></i>Добавить первую категорию
+    </a>
+</div>
+{% endif %}
+
+<!-- Delete confirmation modal -->
+<div class="modal fade" id="deleteModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Подтвердить удаление</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>Вы уверены, что хотите удалить категорию "<span id="categoryName"></span>"?</p>
+                <p class="text-danger">
+                    <i class="fas fa-exclamation-triangle me-1"></i>
+                    Это действие необратимо. Все каналы в этой категории станут без категории.
+                </p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+                <form id="deleteForm" method="POST" style="display: inline;">
+                    <button type="submit" class="btn btn-danger">Удалить категорию</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+function deleteCategory(categoryId, categoryName) {
+    document.getElementById('categoryName').textContent = categoryName;
+    document.getElementById('deleteForm').action = `/admin/categories/${categoryId}/delete`;
+    new bootstrap.Modal(document.getElementById('deleteModal')).show();
+}
+</script>
+{% endblock %}

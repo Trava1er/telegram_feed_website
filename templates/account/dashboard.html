@@ -1,0 +1,311 @@
+{% extends "base.html" %}
+
+{% block title %}Личный кабинет - Work-ing{% endblock %}
+
+{% block extra_head %}
+<style>
+.dashboard-container {
+    padding: 20px 0;
+}
+
+.dashboard-header {
+    background: #ffffff;
+    border-radius: 12px;
+    padding: 24px;
+    margin-bottom: 24px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.dashboard-header h1 {
+    color: #334155;
+    margin-bottom: 8px;
+    font-size: 1.8rem;
+    font-weight: 700;
+}
+
+.dashboard-header p {
+    color: #64748B;
+    margin-bottom: 0;
+}
+
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 20px;
+    margin-bottom: 32px;
+}
+
+.stat-card {
+    background: #ffffff;
+    border-radius: 12px;
+    padding: 24px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    transition: transform 0.2s ease;
+}
+
+.stat-card:hover {
+    transform: translateY(-2px);
+}
+
+.stat-card .icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+    margin-bottom: 16px;
+}
+
+.stat-card.posts .icon {
+    background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+    color: #ffffff;
+}
+
+.stat-card.views .icon {
+    background: linear-gradient(135deg, #10b981 0%, #047857 100%);
+    color: #ffffff;
+}
+
+.stat-card.drafts .icon {
+    background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+    color: #ffffff;
+}
+
+.stat-card.subscriptions .icon {
+    background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
+    color: #ffffff;
+}
+
+.stat-card h3 {
+    font-size: 2rem;
+    font-weight: 700;
+    color: #334155;
+    margin-bottom: 4px;
+}
+
+.stat-card p {
+    color: #64748B;
+    margin-bottom: 0;
+    font-size: 14px;
+}
+
+.recent-section {
+    background: #ffffff;
+    border-radius: 12px;
+    padding: 24px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.recent-section h2 {
+    color: #334155;
+    font-size: 1.3rem;
+    font-weight: 600;
+    margin-bottom: 20px;
+}
+
+.recent-post {
+    border-bottom: 1px solid #e2e8f0;
+    padding: 16px 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+}
+
+.recent-post:last-child {
+    border-bottom: none;
+    padding-bottom: 0;
+}
+
+.recent-post:first-child {
+    padding-top: 0;
+}
+
+.recent-post-content h4 {
+    color: #334155;
+    font-size: 14px;
+    font-weight: 600;
+    margin-bottom: 4px;
+}
+
+.recent-post-content p {
+    color: #64748B;
+    font-size: 13px;
+    margin-bottom: 0;
+}
+
+.recent-post-meta {
+    text-align: right;
+    flex-shrink: 0;
+    margin-left: 16px;
+}
+
+.status-badge {
+    display: inline-block;
+    padding: 4px 8px;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 500;
+    margin-bottom: 4px;
+}
+
+.status-badge.published {
+    background: #dcfce7;
+    color: #166534;
+}
+
+.status-badge.draft {
+    background: #fef3c7;
+    color: #92400e;
+}
+
+.recent-post-date {
+    color: #9ca3af;
+    font-size: 12px;
+}
+
+.quick-actions {
+    display: flex;
+    gap: 12px;
+    margin-top: 24px;
+}
+
+.quick-action-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 16px;
+    background: linear-gradient(135deg, #64748B 0%, #475569 100%);
+    color: #ffffff;
+    text-decoration: none;
+    border-radius: 8px;
+    font-weight: 500;
+    font-size: 14px;
+    transition: all 0.2s ease;
+}
+
+.quick-action-btn:hover {
+    background: linear-gradient(135deg, #71717a 0%, #52525b 100%);
+    transform: translateY(-1px);
+    color: #ffffff;
+    text-decoration: none;
+}
+
+.empty-state {
+    text-align: center;
+    padding: 40px 20px;
+    color: #64748B;
+}
+
+.empty-state i {
+    font-size: 48px;
+    margin-bottom: 16px;
+    color: #9ca3af;
+}
+
+@media (max-width: 768px) {
+    .quick-actions {
+        flex-direction: column;
+    }
+    
+    .recent-post {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+    
+    .recent-post-meta {
+        margin-left: 0;
+        margin-top: 8px;
+    }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="dashboard-container">
+    <div class="container">
+        <div class="dashboard-header">
+            <h1>Добро пожаловать, {{ current_user.full_name }}!</h1>
+            <p>Управляйте своими объявлениями и подписками</p>
+        </div>
+
+        <div class="stats-grid">
+            <div class="stat-card posts">
+                <div class="icon">
+                    <i class="fas fa-file-alt"></i>
+                </div>
+                <h3>{{ stats.published_posts }}</h3>
+                <p>Опубликованных объявлений</p>
+            </div>
+
+            <div class="stat-card views">
+                <div class="icon">
+                    <i class="fas fa-eye"></i>
+                </div>
+                <h3>{{ stats.total_views }}</h3>
+                <p>Общих просмотров</p>
+            </div>
+
+            <div class="stat-card drafts">
+                <div class="icon">
+                    <i class="fas fa-edit"></i>
+                </div>
+                <h3>{{ stats.draft_posts }}</h3>
+                <p>Черновиков</p>
+            </div>
+
+            <div class="stat-card subscriptions">
+                <div class="icon">
+                    <i class="fas fa-rss"></i>
+                </div>
+                <h3>{{ stats.subscriptions_count }}</h3>
+                <p>Активных подписок</p>
+            </div>
+        </div>
+
+        <div class="recent-section">
+            <h2>Последние объявления</h2>
+            
+            {% if recent_posts %}
+                {% for post in recent_posts %}
+                <div class="recent-post">
+                    <div class="recent-post-content">
+                        <h4>{{ post.title }}</h4>
+                        <p>{{ post.content[:100] }}{% if post.content|length > 100 %}...{% endif %}</p>
+                    </div>
+                    <div class="recent-post-meta">
+                        <div class="status-badge {{ post.status.value }}">
+                            {% if post.status.value == 'published' %}Опубликовано{% elif post.status.value == 'draft' %}Черновик{% endif %}
+                        </div>
+                        <div class="recent-post-date">
+                            {{ post.created_at.strftime('%d.%m.%Y') }}
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            {% else %}
+                <div class="empty-state">
+                    <i class="fas fa-file-plus"></i>
+                    <p>У вас пока нет объявлений</p>
+                </div>
+            {% endif %}
+            
+            <div class="quick-actions">
+                <a href="{{ url_for('account.new_post') }}" class="quick-action-btn">
+                    <i class="fas fa-plus"></i>
+                    Создать объявление
+                </a>
+                <a href="{{ url_for('account.posts') }}" class="quick-action-btn">
+                    <i class="fas fa-list"></i>
+                    Все объявления
+                </a>
+                <a href="{{ url_for('account.statistics') }}" class="quick-action-btn">
+                    <i class="fas fa-chart-line"></i>
+                    Статистика
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
