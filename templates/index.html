@@ -237,11 +237,7 @@
                     <i class="fab fa-telegram-plane fa-3x text-muted mb-3"></i>
                     <h4 class="text-muted">Постов не найдено</h4>
                     <p class="text-muted">В данный момент нет постов для отображения.</p>
-                    {% if current_user.is_authenticated and current_user.role.name == 'ADMIN' %}
-                        <a href="{{ url_for('admin.feeds') }}" class="btn btn-primary">
-                            <i class="fas fa-plus"></i> Управление каналами
-                        </a>
-                    {% endif %}
+                    <!-- Admin panel removed - no authentication -->
                 </div>
             {% endif %}
         </div>
