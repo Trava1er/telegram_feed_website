@@ -74,6 +74,10 @@ def create_app(config_name=None):
         print("Step 8: Registering CLI commands...")
         from services import cli
         cli.init_app(app)
+        
+        print("Step 9: Initializing Telegram bot...")
+        from services.telegram_bot import telegram_bot
+        telegram_bot.init_app(app)
             
         print("✅ Full application loaded successfully!")
         return app
