@@ -9,6 +9,12 @@ services:
       - db
       - redis
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
 
   db:
     image: postgres:15
@@ -26,6 +32,8 @@ services:
   redis:
     image: redis:7-alpine
     restart: unless-stopped
+    expose:
+      - "6379"
 
   nginx:
     image: nginx:alpine
@@ -33,11 +41,18 @@ services:
       - "80:80"
       - "443:443"
     volumes:
-      - ./nginx-docker.conf:/etc/nginx/nginx.conf
-      - ./static:/usr/share/nginx/html/static
+      - ./nginx-docker.conf:/etc/nginx/nginx.conf:ro
+      - ./static:/usr/share/nginx/html/static:ro
+      - nginx_logs:/var/log/nginx
     depends_on:
       - web
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
 
 volumes:
   postgres_data:
+  nginx_logs:
