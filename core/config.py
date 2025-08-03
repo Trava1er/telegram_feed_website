@@ -21,9 +21,9 @@ class Config:
     POSTS_PER_PAGE = int(os.getenv('POSTS_PER_PAGE', 20))
     
     # Flask-Login
-    # LOGIN_VIEW = 'auth.login'
-    # LOGIN_MESSAGE = 'Пожалуйста, войдите в систему для доступа к этой странице.'
-    # LOGIN_MESSAGE_CATEGORY = 'info'
+    LOGIN_VIEW = 'auth.login'
+    LOGIN_MESSAGE = 'Пожалуйста, войдите в систему для доступа к этой странице.'
+    LOGIN_MESSAGE_CATEGORY = 'info'
     
     # Telegram Bot Configuration
     TELEGRAM_API_ID = os.getenv('TELEGRAM_API_ID')
