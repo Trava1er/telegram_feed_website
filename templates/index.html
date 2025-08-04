@@ -152,7 +152,7 @@
                         <div class="post-text-section {{ 'full-width' if not post.media_url else '' }}">
                             <div class="post-text-content">
                                 <div class="post-text">
-                                    {{ (post.content|clean_text)[:500] }}...
+                                    {{ (post.content|format_post_text)[:500]|safe }}...
                                 </div>
                                 
                                 <div class="post-meta">

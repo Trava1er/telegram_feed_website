@@ -82,7 +82,7 @@
                         <small class="text-muted">{{ post.telegram_date.strftime('%d.%m.%Y, %H:%M') }}</small>
                     </div>
                     <div class="modal-content-text" style="flex: 1; overflow-y: auto; padding: 16px; border: 1px solid #dee2e6; border-radius: 8px; background: #ffffff;">
-                        {{ post.content|clean_text }}
+                        {{ post.content|format_post_text|safe }}
                     </div>
                     <div class="modal-meta mt-2">
                         {% if post.is_edited %}
@@ -100,7 +100,7 @@
                     <small class="text-muted">{{ post.telegram_date.strftime('%d.%m.%Y, %H:%M') }}</small>
                 </div>
                 <div class="modal-content-text" style="flex: 1; overflow-y: auto; padding: 16px; border: 1px solid #dee2e6; border-radius: 8px; background: #ffffff;">
-                    {{ post.content|clean_text }}
+                    {{ post.content|format_post_text|safe }}
                 </div>
                 <div class="modal-meta mt-2">
                     {% if post.is_edited %}

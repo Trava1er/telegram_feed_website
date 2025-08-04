@@ -35,16 +35,36 @@ def create_app(config_name=None):
     # Add custom Jinja2 filters
     @app.template_filter('clean_text')
     def clean_text_filter(text):
-        """Clean text by removing HTML tags and excessive whitespace."""
+        """Clean text by removing HTML tags but preserve line breaks."""
         if not text:
             return ""
         # Remove HTML tags
         text = re.sub(r'<[^>]+>', '', str(text))
-        # Remove multiple whitespaces and newlines
-        text = re.sub(r'\s+', ' ', text)
+        # Remove excessive whitespace but preserve single line breaks
+        text = re.sub(r'[ \t]+', ' ', text)  # Replace multiple spaces/tabs with single space
+        text = re.sub(r'\n[ \t]*\n', '\n\n', text)  # Clean up multiple newlines but keep double
+        text = re.sub(r'\n{3,}', '\n\n', text)  # Maximum 2 consecutive newlines
         # Remove leading/trailing whitespace
         text = text.strip()
         return text
+    
+    @app.template_filter('nl2br')
+    def nl2br_filter(text):
+        """Convert newlines to HTML line breaks."""
+        if not text:
+            return ""
+        # Convert \n to <br> tags
+        return text.replace('\n', '<br>')
+    
+    @app.template_filter('format_post_text')
+    def format_post_text_filter(text):
+        """Format post text with line breaks and clean formatting."""
+        if not text:
+            return ""
+        # First clean the text
+        cleaned = clean_text_filter(text)
+        # Then convert newlines to HTML breaks
+        return nl2br_filter(cleaned)
     
     try:
         print("Step 1: Starting app initialization...")
