@@ -75,7 +75,8 @@ body {
     flex: 1;
     display: flex;
     overflow: hidden;
-    padding: 0; /* Убираем общий padding, будем добавлять отдельно */
+    padding: 4px; /* Минимальный отступ ~1мм внутри контейнера */
+    gap: 4px; /* Минимальный зазор между медиа и текстом */
 }
 
 /* Media section in post card */
@@ -133,7 +134,7 @@ body {
 /* Text section in post card */
 .post-text-section {
     flex: 1;
-    padding: 6px 16px; /* Уменьшили верхний отступ с 12px до 6px */
+    padding: 0; /* Убираем внутренние отступы, используем gap от родителя */
     display: flex;
     flex-direction: column;
     overflow: hidden;
@@ -1299,7 +1300,7 @@ footer p {
 
 /* Adjustments for full-width text layout */
 .post-content-wrapper.no-media .post-text-section.full-width {
-    padding: 16px;
+    padding: 0; /* Убираем отступы, используем gap от wrapper */
     min-height: 200px;
 }
 
